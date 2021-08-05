@@ -6,14 +6,22 @@
    3  formula_list : formula COMMA formula_list
    4               | formula
 
-   5  formula : ID
-   6          | NOT formula
-   7          | formula AND formula
-   8          | formula OR formula
-   9          | formula IF formula
-  10          | LPAR formula RPAR
+   5  formula : formula_or IF formula
+   6          | formula_or
 
-  11  %entry% : '\001' toplevel
+   7  formula_or : formula_and OR formula_or
+   8             | formula_and
+
+   9  formula_and : formula_not AND formula_and
+  10              | formula_not
+
+  11  formula_not : NOT formula_atomic
+  12              | formula_atomic
+
+  13  formula_atomic : ID
+  14                 | LPAR formula RPAR
+
+  15  %entry% : '\001' toplevel
 
 state 0
 	$accept : . %entry% $end  (0)
@@ -25,7 +33,7 @@ state 0
 
 
 state 1
-	%entry% : '\001' . toplevel  (11)
+	%entry% : '\001' . toplevel  (15)
 
 	ID  shift 3
 	LPAR  shift 4
@@ -36,6 +44,10 @@ state 1
 	toplevel  goto 7
 	formula  goto 8
 	formula_list  goto 9
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
 state 2
@@ -45,20 +57,24 @@ state 2
 
 
 state 3
-	formula : ID .  (5)
+	formula_atomic : ID .  (13)
 
-	.  reduce 5
+	.  reduce 13
 
 
 state 4
-	formula : LPAR . formula RPAR  (10)
+	formula_atomic : LPAR . formula RPAR  (14)
 
 	ID  shift 3
 	LPAR  shift 4
 	NOT  shift 6
 	.  error
 
-	formula  goto 10
+	formula  goto 14
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
 state 5
@@ -69,92 +85,107 @@ state 5
 	NOT  shift 6
 	.  error
 
-	formula  goto 11
+	formula  goto 15
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
 state 6
-	formula : NOT . formula  (6)
+	formula_not : NOT . formula_atomic  (11)
 
 	ID  shift 3
 	LPAR  shift 4
-	NOT  shift 6
 	.  error
 
-	formula  goto 12
+	formula_atomic  goto 16
 
 
 state 7
-	%entry% : '\001' toplevel .  (11)
+	%entry% : '\001' toplevel .  (15)
 
-	.  reduce 11
+	.  reduce 15
 
 
 state 8
 	formula_list : formula . COMMA formula_list  (3)
 	formula_list : formula .  (4)
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
 
-	COMMA  shift 13
-	AND  shift 14
-	OR  shift 15
-	IF  shift 16
+	COMMA  shift 17
 	VDASH  reduce 4
 
 
 state 9
 	toplevel : formula_list . VDASH formula PERIOD  (2)
 
-	VDASH  shift 17
+	VDASH  shift 18
 	.  error
 
 
 state 10
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
-	formula : LPAR formula . RPAR  (10)
+	formula : formula_or . IF formula  (5)
+	formula : formula_or .  (6)
 
-	RPAR  shift 18
-	AND  shift 14
-	OR  shift 15
-	IF  shift 16
-	.  error
-
-
-state 11
-	toplevel : VDASH formula . PERIOD  (1)
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
-
-	PERIOD  shift 19
-	AND  shift 14
-	OR  shift 15
-	IF  shift 16
-	.  error
-
-
-12: shift/reduce conflict (shift 14, reduce 6) on AND
-12: shift/reduce conflict (shift 15, reduce 6) on OR
-12: shift/reduce conflict (shift 16, reduce 6) on IF
-state 12
-	formula : NOT formula .  (6)
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
-
-	AND  shift 14
-	OR  shift 15
-	IF  shift 16
+	IF  shift 19
 	RPAR  reduce 6
 	COMMA  reduce 6
 	PERIOD  reduce 6
 	VDASH  reduce 6
 
 
+state 11
+	formula_or : formula_and . OR formula_or  (7)
+	formula_or : formula_and .  (8)
+
+	OR  shift 20
+	RPAR  reduce 8
+	COMMA  reduce 8
+	PERIOD  reduce 8
+	VDASH  reduce 8
+	IF  reduce 8
+
+
+state 12
+	formula_and : formula_not . AND formula_and  (9)
+	formula_and : formula_not .  (10)
+
+	AND  shift 21
+	RPAR  reduce 10
+	COMMA  reduce 10
+	PERIOD  reduce 10
+	VDASH  reduce 10
+	OR  reduce 10
+	IF  reduce 10
+
+
 state 13
+	formula_not : formula_atomic .  (12)
+
+	.  reduce 12
+
+
+state 14
+	formula_atomic : LPAR formula . RPAR  (14)
+
+	RPAR  shift 22
+	.  error
+
+
+state 15
+	toplevel : VDASH formula . PERIOD  (1)
+
+	PERIOD  shift 23
+	.  error
+
+
+state 16
+	formula_not : NOT formula_atomic .  (11)
+
+	.  reduce 11
+
+
+state 17
 	formula_list : formula COMMA . formula_list  (3)
 
 	ID  shift 3
@@ -163,43 +194,14 @@ state 13
 	.  error
 
 	formula  goto 8
-	formula_list  goto 20
+	formula_list  goto 24
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
-state 14
-	formula : formula AND . formula  (7)
-
-	ID  shift 3
-	LPAR  shift 4
-	NOT  shift 6
-	.  error
-
-	formula  goto 21
-
-
-state 15
-	formula : formula OR . formula  (8)
-
-	ID  shift 3
-	LPAR  shift 4
-	NOT  shift 6
-	.  error
-
-	formula  goto 22
-
-
-state 16
-	formula : formula IF . formula  (9)
-
-	ID  shift 3
-	LPAR  shift 4
-	NOT  shift 6
-	.  error
-
-	formula  goto 23
-
-
-state 17
+state 18
 	toplevel : formula_list VDASH . formula PERIOD  (2)
 
 	ID  shift 3
@@ -207,93 +209,103 @@ state 17
 	NOT  shift 6
 	.  error
 
-	formula  goto 24
-
-
-state 18
-	formula : LPAR formula RPAR .  (10)
-
-	.  reduce 10
+	formula  goto 25
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
 state 19
+	formula : formula_or IF . formula  (5)
+
+	ID  shift 3
+	LPAR  shift 4
+	NOT  shift 6
+	.  error
+
+	formula  goto 26
+	formula_or  goto 10
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
+
+
+state 20
+	formula_or : formula_and OR . formula_or  (7)
+
+	ID  shift 3
+	LPAR  shift 4
+	NOT  shift 6
+	.  error
+
+	formula_or  goto 27
+	formula_and  goto 11
+	formula_not  goto 12
+	formula_atomic  goto 13
+
+
+state 21
+	formula_and : formula_not AND . formula_and  (9)
+
+	ID  shift 3
+	LPAR  shift 4
+	NOT  shift 6
+	.  error
+
+	formula_and  goto 28
+	formula_not  goto 12
+	formula_atomic  goto 13
+
+
+state 22
+	formula_atomic : LPAR formula RPAR .  (14)
+
+	.  reduce 14
+
+
+state 23
 	toplevel : VDASH formula PERIOD .  (1)
 
 	.  reduce 1
 
 
-state 20
+state 24
 	formula_list : formula COMMA formula_list .  (3)
 
 	.  reduce 3
 
 
-state 21
-	formula : formula . AND formula  (7)
-	formula : formula AND formula .  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
-
-	OR  shift 15
-	IF  shift 16
-	RPAR  reduce 7
-	COMMA  reduce 7
-	PERIOD  reduce 7
-	VDASH  reduce 7
-	AND  reduce 7
-
-
-state 22
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula OR formula .  (8)
-	formula : formula . IF formula  (9)
-
-	IF  shift 16
-	RPAR  reduce 8
-	COMMA  reduce 8
-	PERIOD  reduce 8
-	VDASH  reduce 8
-	AND  reduce 8
-	OR  reduce 8
-
-
-state 23
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
-	formula : formula IF formula .  (9)
-
-	IF  shift 16
-	RPAR  reduce 9
-	COMMA  reduce 9
-	PERIOD  reduce 9
-	VDASH  reduce 9
-	AND  reduce 9
-	OR  reduce 9
-
-
-state 24
+state 25
 	toplevel : formula_list VDASH formula . PERIOD  (2)
-	formula : formula . AND formula  (7)
-	formula : formula . OR formula  (8)
-	formula : formula . IF formula  (9)
 
-	PERIOD  shift 25
-	AND  shift 14
-	OR  shift 15
-	IF  shift 16
+	PERIOD  shift 29
 	.  error
 
 
-state 25
+state 26
+	formula : formula_or IF formula .  (5)
+
+	.  reduce 5
+
+
+state 27
+	formula_or : formula_and OR formula_or .  (7)
+
+	.  reduce 7
+
+
+state 28
+	formula_and : formula_not AND formula_and .  (9)
+
+	.  reduce 9
+
+
+state 29
 	toplevel : formula_list VDASH formula PERIOD .  (2)
 
 	.  reduce 2
 
 
-State 12 contains 3 shift/reduce conflicts.
-
-
-13 terminals, 5 nonterminals
-12 grammar rules, 26 states
+13 terminals, 9 nonterminals
+16 grammar rules, 30 states

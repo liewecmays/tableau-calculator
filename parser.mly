@@ -7,10 +7,6 @@
 %token VDASH
 %token NOT AND OR IF
 
-%left AND
-%left OR
-%right IF
-
 %start toplevel 
 %type <Syntax.inference> toplevel
 %%
@@ -26,10 +22,26 @@ formula_list:
 ;
 
 formula:
+	| formula_or IF formula { FIf ($1, $3) }
+	| formula_or { $1 }
+;
+
+formula_or:
+	| formula_and OR formula_or { FOr ($1, $3) }
+	| formula_and { $1 }
+;
+
+formula_and:
+	| formula_not AND formula_and { FAnd ($1, $3) }
+	| formula_not { $1 }
+;
+
+formula_not:
+	| NOT formula_atomic { FNot $2 }
+	| formula_atomic { $1 }
+;
+
+formula_atomic:
 	| ID { FVar $1 }
-	| NOT formula { FNot $2 }
-	| formula AND formula { FAnd ($1, $3) }
-	| formula OR formula { FOr ($1, $3) }
-	| formula IF formula { FIf ($1, $3) }
 	| LPAR formula RPAR { $2 }
 ;
