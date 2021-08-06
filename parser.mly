@@ -12,6 +12,7 @@
 %%
 
 toplevel:
+	| formula PERIOD { Inf ([], $1) }
 	| VDASH formula PERIOD { Inf ([], $2) }
 	| formula_list VDASH formula PERIOD { Inf ($1, $3) }
 ;
@@ -37,7 +38,7 @@ formula_and:
 ;
 
 formula_not:
-	| NOT formula_atomic { FNot $2 }
+	| NOT formula_not { FNot $2 }
 	| formula_atomic { $1 }
 ;
 

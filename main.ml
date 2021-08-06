@@ -7,7 +7,9 @@ let rec read_solve_print () =
 		flush stdout;
 		let inf = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
 		let res = solve inf in
-			(if List.concat res = [] then print_endline "provable." else
+			if List.concat res = [] then print_endline "provable." else
+				(print_endline "not provable.";
+				print_string "counter-model: ";
 				let rec print_res res =
 					match res with
 					| [] -> ()

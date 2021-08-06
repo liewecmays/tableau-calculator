@@ -1,27 +1,28 @@
    0  $accept : %entry% $end
 
-   1  toplevel : VDASH formula PERIOD
-   2           | formula_list VDASH formula PERIOD
+   1  toplevel : formula PERIOD
+   2           | VDASH formula PERIOD
+   3           | formula_list VDASH formula PERIOD
 
-   3  formula_list : formula COMMA formula_list
-   4               | formula
+   4  formula_list : formula COMMA formula_list
+   5               | formula
 
-   5  formula : formula_or IF formula
-   6          | formula_or
+   6  formula : formula_or IF formula
+   7          | formula_or
 
-   7  formula_or : formula_and OR formula_or
-   8             | formula_and
+   8  formula_or : formula_and OR formula_or
+   9             | formula_and
 
-   9  formula_and : formula_not AND formula_and
-  10              | formula_not
+  10  formula_and : formula_not AND formula_and
+  11              | formula_not
 
-  11  formula_not : NOT formula_atomic
-  12              | formula_atomic
+  12  formula_not : NOT formula_not
+  13              | formula_atomic
 
-  13  formula_atomic : ID
-  14                 | LPAR formula RPAR
+  14  formula_atomic : ID
+  15                 | LPAR formula RPAR
 
-  15  %entry% : '\001' toplevel
+  16  %entry% : '\001' toplevel
 
 state 0
 	$accept : . %entry% $end  (0)
@@ -33,7 +34,7 @@ state 0
 
 
 state 1
-	%entry% : '\001' . toplevel  (15)
+	%entry% : '\001' . toplevel  (16)
 
 	ID  shift 3
 	LPAR  shift 4
@@ -57,13 +58,13 @@ state 2
 
 
 state 3
-	formula_atomic : ID .  (13)
+	formula_atomic : ID .  (14)
 
-	.  reduce 13
+	.  reduce 14
 
 
 state 4
-	formula_atomic : LPAR . formula RPAR  (14)
+	formula_atomic : LPAR . formula RPAR  (15)
 
 	ID  shift 3
 	LPAR  shift 4
@@ -78,7 +79,7 @@ state 4
 
 
 state 5
-	toplevel : VDASH . formula PERIOD  (1)
+	toplevel : VDASH . formula PERIOD  (2)
 
 	ID  shift 3
 	LPAR  shift 4
@@ -93,116 +94,104 @@ state 5
 
 
 state 6
-	formula_not : NOT . formula_atomic  (11)
-
-	ID  shift 3
-	LPAR  shift 4
-	.  error
-
-	formula_atomic  goto 16
-
-
-state 7
-	%entry% : '\001' toplevel .  (15)
-
-	.  reduce 15
-
-
-state 8
-	formula_list : formula . COMMA formula_list  (3)
-	formula_list : formula .  (4)
-
-	COMMA  shift 17
-	VDASH  reduce 4
-
-
-state 9
-	toplevel : formula_list . VDASH formula PERIOD  (2)
-
-	VDASH  shift 18
-	.  error
-
-
-state 10
-	formula : formula_or . IF formula  (5)
-	formula : formula_or .  (6)
-
-	IF  shift 19
-	RPAR  reduce 6
-	COMMA  reduce 6
-	PERIOD  reduce 6
-	VDASH  reduce 6
-
-
-state 11
-	formula_or : formula_and . OR formula_or  (7)
-	formula_or : formula_and .  (8)
-
-	OR  shift 20
-	RPAR  reduce 8
-	COMMA  reduce 8
-	PERIOD  reduce 8
-	VDASH  reduce 8
-	IF  reduce 8
-
-
-state 12
-	formula_and : formula_not . AND formula_and  (9)
-	formula_and : formula_not .  (10)
-
-	AND  shift 21
-	RPAR  reduce 10
-	COMMA  reduce 10
-	PERIOD  reduce 10
-	VDASH  reduce 10
-	OR  reduce 10
-	IF  reduce 10
-
-
-state 13
-	formula_not : formula_atomic .  (12)
-
-	.  reduce 12
-
-
-state 14
-	formula_atomic : LPAR formula . RPAR  (14)
-
-	RPAR  shift 22
-	.  error
-
-
-state 15
-	toplevel : VDASH formula . PERIOD  (1)
-
-	PERIOD  shift 23
-	.  error
-
-
-state 16
-	formula_not : NOT formula_atomic .  (11)
-
-	.  reduce 11
-
-
-state 17
-	formula_list : formula COMMA . formula_list  (3)
+	formula_not : NOT . formula_not  (12)
 
 	ID  shift 3
 	LPAR  shift 4
 	NOT  shift 6
 	.  error
 
-	formula  goto 8
-	formula_list  goto 24
-	formula_or  goto 10
-	formula_and  goto 11
-	formula_not  goto 12
+	formula_not  goto 16
 	formula_atomic  goto 13
 
 
-state 18
-	toplevel : formula_list VDASH . formula PERIOD  (2)
+state 7
+	%entry% : '\001' toplevel .  (16)
+
+	.  reduce 16
+
+
+state 8
+	toplevel : formula . PERIOD  (1)
+	formula_list : formula . COMMA formula_list  (4)
+	formula_list : formula .  (5)
+
+	COMMA  shift 17
+	PERIOD  shift 18
+	VDASH  reduce 5
+
+
+state 9
+	toplevel : formula_list . VDASH formula PERIOD  (3)
+
+	VDASH  shift 19
+	.  error
+
+
+state 10
+	formula : formula_or . IF formula  (6)
+	formula : formula_or .  (7)
+
+	IF  shift 20
+	RPAR  reduce 7
+	COMMA  reduce 7
+	PERIOD  reduce 7
+	VDASH  reduce 7
+
+
+state 11
+	formula_or : formula_and . OR formula_or  (8)
+	formula_or : formula_and .  (9)
+
+	OR  shift 21
+	RPAR  reduce 9
+	COMMA  reduce 9
+	PERIOD  reduce 9
+	VDASH  reduce 9
+	IF  reduce 9
+
+
+state 12
+	formula_and : formula_not . AND formula_and  (10)
+	formula_and : formula_not .  (11)
+
+	AND  shift 22
+	RPAR  reduce 11
+	COMMA  reduce 11
+	PERIOD  reduce 11
+	VDASH  reduce 11
+	OR  reduce 11
+	IF  reduce 11
+
+
+state 13
+	formula_not : formula_atomic .  (13)
+
+	.  reduce 13
+
+
+state 14
+	formula_atomic : LPAR formula . RPAR  (15)
+
+	RPAR  shift 23
+	.  error
+
+
+state 15
+	toplevel : VDASH formula . PERIOD  (2)
+
+	PERIOD  shift 24
+	.  error
+
+
+state 16
+	formula_not : NOT formula_not .  (12)
+
+	.  reduce 12
+
+
+state 17
+	formula_list : formula COMMA . formula_list  (4)
 
 	ID  shift 3
 	LPAR  shift 4
@@ -210,21 +199,28 @@ state 18
 	.  error
 
 	formula  goto 25
+	formula_list  goto 26
 	formula_or  goto 10
 	formula_and  goto 11
 	formula_not  goto 12
 	formula_atomic  goto 13
 
 
+state 18
+	toplevel : formula PERIOD .  (1)
+
+	.  reduce 1
+
+
 state 19
-	formula : formula_or IF . formula  (5)
+	toplevel : formula_list VDASH . formula PERIOD  (3)
 
 	ID  shift 3
 	LPAR  shift 4
 	NOT  shift 6
 	.  error
 
-	formula  goto 26
+	formula  goto 27
 	formula_or  goto 10
 	formula_and  goto 11
 	formula_not  goto 12
@@ -232,80 +228,103 @@ state 19
 
 
 state 20
-	formula_or : formula_and OR . formula_or  (7)
+	formula : formula_or IF . formula  (6)
 
 	ID  shift 3
 	LPAR  shift 4
 	NOT  shift 6
 	.  error
 
-	formula_or  goto 27
+	formula  goto 28
+	formula_or  goto 10
 	formula_and  goto 11
 	formula_not  goto 12
 	formula_atomic  goto 13
 
 
 state 21
-	formula_and : formula_not AND . formula_and  (9)
+	formula_or : formula_and OR . formula_or  (8)
 
 	ID  shift 3
 	LPAR  shift 4
 	NOT  shift 6
 	.  error
 
-	formula_and  goto 28
+	formula_or  goto 29
+	formula_and  goto 11
 	formula_not  goto 12
 	formula_atomic  goto 13
 
 
 state 22
-	formula_atomic : LPAR formula RPAR .  (14)
+	formula_and : formula_not AND . formula_and  (10)
 
-	.  reduce 14
+	ID  shift 3
+	LPAR  shift 4
+	NOT  shift 6
+	.  error
+
+	formula_and  goto 30
+	formula_not  goto 12
+	formula_atomic  goto 13
 
 
 state 23
-	toplevel : VDASH formula PERIOD .  (1)
+	formula_atomic : LPAR formula RPAR .  (15)
 
-	.  reduce 1
+	.  reduce 15
 
 
 state 24
-	formula_list : formula COMMA formula_list .  (3)
-
-	.  reduce 3
-
-
-state 25
-	toplevel : formula_list VDASH formula . PERIOD  (2)
-
-	PERIOD  shift 29
-	.  error
-
-
-state 26
-	formula : formula_or IF formula .  (5)
-
-	.  reduce 5
-
-
-state 27
-	formula_or : formula_and OR formula_or .  (7)
-
-	.  reduce 7
-
-
-state 28
-	formula_and : formula_not AND formula_and .  (9)
-
-	.  reduce 9
-
-
-state 29
-	toplevel : formula_list VDASH formula PERIOD .  (2)
+	toplevel : VDASH formula PERIOD .  (2)
 
 	.  reduce 2
 
 
+state 25
+	formula_list : formula . COMMA formula_list  (4)
+	formula_list : formula .  (5)
+
+	COMMA  shift 17
+	VDASH  reduce 5
+
+
+state 26
+	formula_list : formula COMMA formula_list .  (4)
+
+	.  reduce 4
+
+
+state 27
+	toplevel : formula_list VDASH formula . PERIOD  (3)
+
+	PERIOD  shift 31
+	.  error
+
+
+state 28
+	formula : formula_or IF formula .  (6)
+
+	.  reduce 6
+
+
+state 29
+	formula_or : formula_and OR formula_or .  (8)
+
+	.  reduce 8
+
+
+state 30
+	formula_and : formula_not AND formula_and .  (10)
+
+	.  reduce 10
+
+
+state 31
+	toplevel : formula_list VDASH formula PERIOD .  (3)
+
+	.  reduce 3
+
+
 13 terminals, 9 nonterminals
-16 grammar rules, 30 states
+17 grammar rules, 32 states

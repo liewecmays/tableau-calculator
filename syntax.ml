@@ -37,7 +37,7 @@ let string_of_valuation v =
 		| [] -> ""
 		| fml :: rest ->
 			match fml with
-			| FVar x -> if flag then x ^ ":true" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":true" ^ string_of_valuation_inner rest false
-			| FNot (FVar x) -> if flag then x ^ ":false" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":false" ^ string_of_valuation_inner rest false
+			| FVar x -> if flag then x ^ "->true" ^ string_of_valuation_inner rest false else ", " ^ x ^ "->true" ^ string_of_valuation_inner rest false
+			| FNot (FVar x) -> if flag then x ^ "->false" ^ string_of_valuation_inner rest false else ", " ^ x ^ "->false" ^ string_of_valuation_inner rest false
 			| _ -> raise StringifyErr
 	in string_of_valuation_inner v true
