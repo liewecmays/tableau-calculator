@@ -1,4 +1,5 @@
 open Syntax
+open Util
 open Solver
 
 let rec read_solve_print () =
