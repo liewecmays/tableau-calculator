@@ -96,25 +96,44 @@ let rec search_tableau fml_list branch =
 			| FOr (fml1, fml2) -> search_tableau (FNot fml1 :: FNot fml2 :: rest) branch
 			| FNot fml'' -> search_tableau (fml'' :: rest) branch
 
+let rec get_vars fml =
+	match fml with
+	| FVar x -> [x]
+	| FNot fml' -> get_vars fml'
+	| FAnd (fml1, fml2) | FOr (fml1, fml2) | FIf (fml1, fml2) -> get_vars fml1 @ get_vars fml2
+
+let rec get_vars_list fml_list =
+	match fml_list with
+	| [] -> []
+	| fml :: rest -> get_vars fml @ get_vars_list rest
+
+(* 付値で定まっていない付値に対してfalseを割り当てる *)
+let rec fill_false v vars =
+	match vars with
+	| [] -> v
+	| x :: rest -> if List.mem_assoc x v then fill_false v rest else (x, false) :: fill_false v rest
+
+let remove_dup list =
+	let rec remove_dup_inner list acc =
+		match list with
+		| [] -> acc
+		| e :: rest ->
+			if List.mem e acc then
+				remove_dup_inner rest acc
+			else
+				remove_dup_inner rest (e :: acc)
+	in remove_dup_inner list []
+
 (* 推論を受け取り、反例モデルを返す(妥当な場合は空リスト) *)
 let solve inf = 
 	match inf with
 	| Inf (cn, pr) ->
 		let init_list = FNot pr :: cn in
+		let vars = get_vars_list init_list in
 		if is_debug_mode then (print_endline "\n===== search start ====="; level := 0; after_fork := false) else (); (* 変数の初期化 *)
 		let counter_models =
 			match search_tableau init_list [] with
 			| Some v -> v
 			| None -> []
 		in if is_debug_mode then print_endline "===== search end =====\n" else ();
-		let remove_dup list =
-			let rec remove_dup_inner list acc =
-				match list with
-				| [] -> acc
-				| e :: rest ->
-					if List.mem e acc then
-						remove_dup_inner rest acc
-					else
-						remove_dup_inner rest (e :: acc)
-			in remove_dup_inner list []
-		in remove_dup counter_models
+		fill_false (remove_dup counter_models) vars
