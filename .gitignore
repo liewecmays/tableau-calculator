@@ -1,0 +1,10 @@
+/._bcdi
+/._d
+*.cmo
+*.cmi
+*.cma
+*.output
+main
+lexer.ml
+parser.ml
+parser.mli
