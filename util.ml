@@ -52,10 +52,6 @@ let string_of_formula_list fmls =
 				", " ^ string_of_formula fml ^ string_of_formula_list_inner rest false
 	in "[" ^ string_of_formula_list_inner fmls true
 
-let string_of_inference inf =
-	match inf with
-	| Inf (pr, cn) -> "primeses: " ^ string_of_formula_list pr ^ ", " ^ "conclusion: " ^ string_of_formula cn
-
 let string_of_valuation v =
 	let rec string_of_valuation_inner v flag =
 		match v with

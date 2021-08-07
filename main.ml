@@ -6,8 +6,8 @@ let rec read_solve_print () =
 	try
 		print_string "# ";
 		flush stdout;
-		let inf = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
-		let v = solve inf in
+		let (premises, conclusion) = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
+		let v = solve (premises, conclusion) in
 			if v = [] then print_endline "provable." else
 				(print_endline "not provable.";
 				print_string "counter-model: ";

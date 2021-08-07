@@ -93,15 +93,13 @@ let rec search_tableau fml_list branch =
 			| FNot fml'' -> search_tableau (fml'' :: rest) branch
 
 (* 推論を受け取り、反例モデルを1つ返す(証明可能な場合は空リスト) *)
-let solve inf = 
-	match inf with
-	| Inf (cn, pr) ->
-		let init_list = FNot pr :: cn in
-		let vars = get_vars_list init_list in
-		if is_debug_mode then (print_endline "\n===== search start ====="; level := 0; after_fork := false) else (); (* 変数の初期化 *)
-		let counter_models =
-			match search_tableau init_list [] with
-			| Some v -> v
-			| None -> []
-		in if is_debug_mode then print_endline "===== search end =====\n" else ();
-		fill_false (remove_dup counter_models) vars
+let solve (premises, conclusion) =
+	let init_list = FNot conclusion :: premises in
+	let vars = get_vars_list init_list in
+	if is_debug_mode then (print_endline "\n===== search start ====="; level := 0; after_fork := false) else (); (* 変数の初期化 *)
+	let counter_models =
+		match search_tableau init_list [] with
+		| Some v -> v
+		| None -> []
+	in if is_debug_mode then print_endline "===== search end =====\n" else ();
+	fill_false (remove_dup counter_models) vars

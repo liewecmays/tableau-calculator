@@ -1,5 +1,5 @@
 %{
-  open Syntax
+	open Syntax
 %}
 
 %token <string> ID
@@ -8,13 +8,13 @@
 %token NOT AND OR IF
 
 %start toplevel 
-%type <Syntax.inference> toplevel
+%type <(Syntax.formula list * Syntax.formula)> toplevel
 %%
 
 toplevel:
-	| formula PERIOD { Inf ([], $1) }
-	| VDASH formula PERIOD { Inf ([], $2) }
-	| formula_list VDASH formula PERIOD { Inf ($1, $3) }
+	| formula PERIOD { ([], $1) }
+	| VDASH formula PERIOD { ([], $2) }
+	| formula_list VDASH formula PERIOD { ($1, $3) }
 ;
 
 formula_list:
