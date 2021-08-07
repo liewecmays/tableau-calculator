@@ -23,7 +23,7 @@ let rec string_of_formula fml =
 		(match fml1 with
 		| FOr (_, _) | FIf (_, _) -> "(" ^ string_of_formula fml1 ^ ")"
 		| _ -> string_of_formula fml1)
-		^ "⋀" ^
+		^ " ⋀ " ^
 		(match fml2 with
 		| FOr (_, _) | FIf (_, _) -> "(" ^ string_of_formula fml2 ^ ")"
 		| _ -> string_of_formula fml2)
@@ -58,6 +58,11 @@ let string_of_inference inf =
 
 exception StringifyErr
 let string_of_valuation v =
+	let sort_fun fml1 fml2 =
+		match (fml1, fml2) with
+		| (FVar x, FVar y) | (FVar x, FNot (FVar y)) | (FNot (FVar x), FVar y) | (FNot (FVar x), FNot (FVar y)) -> String.compare x y
+		| _ -> raise StringifyErr
+	in let sorted_v = List.sort sort_fun v in
 	let rec string_of_valuation_inner v flag =
 		match v with
 		| [] -> "}"
@@ -66,7 +71,7 @@ let string_of_valuation v =
 			| FVar x -> if flag then x ^ ":true" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":true" ^ string_of_valuation_inner rest false
 			| FNot (FVar x) -> if flag then x ^ ":false" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":false" ^ string_of_valuation_inner rest false
 			| _ -> raise StringifyErr
-	in "{" ^ string_of_valuation_inner v true
+	in "{" ^ string_of_valuation_inner sorted_v true
 
 
 (* tree-display (for debug) *)
