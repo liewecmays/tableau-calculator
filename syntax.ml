@@ -56,22 +56,16 @@ let string_of_inference inf =
 	match inf with
 	| Inf (pr, cn) -> "primeses: " ^ string_of_formula_list pr ^ ", " ^ "conclusion: " ^ string_of_formula cn
 
-exception StringifyErr
 let string_of_valuation v =
-	let sort_fun fml1 fml2 =
-		match (fml1, fml2) with
-		| (FVar x, FVar y) | (FVar x, FNot (FVar y)) | (FNot (FVar x), FVar y) | (FNot (FVar x), FNot (FVar y)) -> String.compare x y
-		| _ -> raise StringifyErr
-	in let sorted_v = List.sort sort_fun v in
 	let rec string_of_valuation_inner v flag =
 		match v with
 		| [] -> "}"
-		| fml :: rest ->
-			match fml with
-			| FVar x -> if flag then x ^ ":true" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":true" ^ string_of_valuation_inner rest false
-			| FNot (FVar x) -> if flag then x ^ ":false" ^ string_of_valuation_inner rest false else ", " ^ x ^ ":false" ^ string_of_valuation_inner rest false
-			| _ -> raise StringifyErr
-	in "{" ^ string_of_valuation_inner sorted_v true
+		| (x, b) :: rest ->
+			if flag then
+				x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
+			else
+				", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
+	in "{" ^ string_of_valuation_inner (List.sort (fun (x, _) (y, _) -> String.compare x y) v) true
 
 
 (* tree-display (for debug) *)

@@ -18,21 +18,21 @@ let find_valuation branch =
 		| fml :: rest ->
 			match fml with
 			| FVar x ->
-				if List.mem (FNot (FVar x)) acc then
+				if List.mem (x, false) acc then
 					None (* 矛盾したら終わり *)
 				else
-					if List.mem fml acc then
-						find_valuation_inner rest acc (* 既に入っている場合は加えない *)
-					else
-						find_valuation_inner rest (fml :: acc)
-			| FNot (FVar x) ->
-				if List.mem (FVar x) acc then
-					None
-				else
-					if List.mem fml acc then
+					if List.mem_assoc x acc then (* 既に入っている場合は加えない *)
 						find_valuation_inner rest acc
 					else
-						find_valuation_inner rest (fml :: acc)
+						find_valuation_inner rest ((x, true) :: acc)
+			| FNot (FVar x) ->
+				if List.mem (x, true) acc then
+					None
+				else
+					if List.mem_assoc x acc then
+						find_valuation_inner rest acc
+					else
+						find_valuation_inner rest ((x, false) :: acc)
 			| _ -> raise SolveErr
 	in find_valuation_inner branch []
 
