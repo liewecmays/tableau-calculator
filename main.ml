@@ -7,11 +7,18 @@ let rec read_solve_print () =
 		print_string "# ";
 		flush stdout;
 		let (premises, conclusion) = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
-		let v = solve (premises, conclusion) in
-			if v = [] then print_endline "provable." else
-				(print_endline "not provable.";
-				print_string "counter-model: ";
-				print_endline (string_of_valuation v));
+		(if is_modal_list (conclusion :: premises) then
+			let counter_model = solve (premises, conclusion) in
+				if counter_model = [] then print_endline "modal logic: provable." else
+					(print_endline "modal logic: not provable.";
+					print_string "counter-model: ";
+					print_endline (string_of_valuation counter_model Modal));
+		else
+			let counter_model = solve (premises, conclusion) in
+				if counter_model = [] then print_endline "classical logic: provable." else
+					(print_endline "classical logic: not provable.";
+					print_string "counter-model: ";
+					print_endline (string_of_valuation counter_model Classical)));
 		read_solve_print ()
 	with
 	| Failure s -> print_endline s; read_solve_print ()

@@ -10,9 +10,11 @@ rule token = parse
 | "/\\" { Parser.AND }
 | "\\/" { Parser.OR }
 | "->" { Parser.IF }
+| "[]" { Parser.BOX }
+| "<>" { Parser.DIA }
 | "(" { Parser.LPAR }
 | ")" { Parser.RPAR }
 | "," { Parser.COMMA }
 | "." { Parser.PERIOD }
 | ident as id { Parser.ID id }
-| _ { failwith ("lex error") }
+| _ { failwith ("lex error.") }

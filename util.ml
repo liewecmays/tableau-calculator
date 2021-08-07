@@ -6,6 +6,41 @@ let is_debug_mode =
 	| Invalid_argument _ -> false
 
 
+(* 様相演算子が含まれるか否かを判定 *)
+let rec is_modal fml =
+	match fml with
+	| FVar _ -> false
+	| FBox _ | FDia _ -> true
+	| FNot fml' -> is_modal fml'
+	| FAnd (fml1, fml2) | FOr (fml1, fml2) | FIf (fml1, fml2) -> is_modal fml1 || is_modal fml2
+
+let rec is_modal_list fml_list =
+	match fml_list with
+	| [] -> false
+	| fml :: rest -> is_modal fml || is_modal_list rest
+
+
+(* 付値で指定されている世界を取り出す *)
+let worlds_of_valuation v =
+	let rec worlds_of_valuation_inner v acc =
+		match v with
+		| [] -> acc
+		| ((w, _), _) :: rest -> if List.mem w acc then worlds_of_valuation_inner rest acc else worlds_of_valuation_inner rest (w :: acc)
+	in worlds_of_valuation_inner v []
+
+(* 付値を世界ごとに分割 *)
+let divide_valuation v =
+	let rec filter_valuation w v =
+		match v with
+		| [] -> []
+		| ((w', x), b) :: rest -> if w = w' then (x, b) :: filter_valuation w rest else filter_valuation w rest
+	in let rec divide_valuation_inner v worlds =
+		match worlds with
+		| [] -> []
+		| w :: rest -> (w, filter_valuation w v) :: divide_valuation_inner v rest
+	in divide_valuation_inner v (List.sort Stdlib.compare (worlds_of_valuation v))
+
+
 (* string_of_系 *)
 (*
 - 結合の強さ: not > and > or > if
@@ -17,8 +52,16 @@ let rec string_of_formula fml =
 	| FVar p -> p
 	| FNot fml' ->
 		(match fml' with
-		| FNot _ | FVar _ -> "¬" ^ string_of_formula fml'
+		| FVar _ | FNot _ | FBox _ | FDia _ -> "¬" ^ string_of_formula fml'
 		| _ -> "¬(" ^ string_of_formula fml' ^ ")")
+	| FBox fml' ->
+		(match fml' with
+		| FVar _ | FNot _ | FBox _ | FDia _ -> "□" ^ string_of_formula fml'
+		| _ -> "□(" ^ string_of_formula fml' ^ ")")
+	| FDia fml' ->
+		(match fml' with
+		| FVar _ | FNot _ | FBox _ | FDia _ -> "◊" ^ string_of_formula fml'
+		| _ -> "◊(" ^ string_of_formula fml' ^ ")")
 	| FAnd (fml1, fml2) ->
 		(match fml1 with
 		| FOr (_, _) | FIf (_, _) -> "(" ^ string_of_formula fml1 ^ ")"
@@ -52,16 +95,41 @@ let string_of_formula_list fmls =
 				", " ^ string_of_formula fml ^ string_of_formula_list_inner rest false
 	in "[" ^ string_of_formula_list_inner fmls true
 
-let string_of_valuation v =
-	let rec string_of_valuation_inner v flag =
+let string_of_valuation_without_world v =
+	let rec string_of_valuation_without_world_inner v flag =
 		match v with
 		| [] -> "}"
 		| (x, b) :: rest ->
 			if flag then
-				x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
+				x ^ ":" ^ string_of_bool b ^ string_of_valuation_without_world_inner rest false
 			else
-				", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
-	in "{" ^ string_of_valuation_inner (List.sort (fun (x, _) (y, _) -> String.compare x y) v) true
+				", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_without_world_inner rest false
+	in "{" ^ string_of_valuation_without_world_inner (List.sort (fun (x, _) (y, _) -> String.compare x y) v) true
+
+let string_of_valuation v mode =
+	match mode with
+	| Classical ->
+		let rec string_of_valuation_inner v flag =
+			match v with
+			| [] -> "}"
+			| ((_, x), b) :: rest ->
+				if flag then
+					x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
+				else
+					", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
+		in "{" ^ string_of_valuation_inner (List.sort (fun ((_, x), _) ((_, y), _) -> String.compare x y) v) true
+	| Modal (* to do *)
+	| Debug ->
+		let vs = divide_valuation v in
+		let rec string_of_valuation_each_v vs flag =
+			match vs with
+			| [] -> ""
+			| (w, v) :: rest ->
+				if flag then
+					"w" ^ string_of_int w ^ ":" ^ string_of_valuation_without_world v ^ string_of_valuation_each_v rest false
+				else
+					", w" ^ string_of_int w ^ ":" ^ string_of_valuation_without_world v ^ string_of_valuation_each_v rest false
+		in string_of_valuation_each_v vs true
 
 
 (* タブローをツリー状に表示する際に使う(デバッグ用) *)
@@ -79,7 +147,7 @@ let string_of_formula_in_tree fml level = n_space level ^ string_of_formula fml
 let rec get_vars fml =
 	match fml with
 	| FVar x -> [x]
-	| FNot fml' -> get_vars fml'
+	| FNot fml' | FBox fml' | FDia fml' -> get_vars fml'
 	| FAnd (fml1, fml2) | FOr (fml1, fml2) | FIf (fml1, fml2) -> get_vars fml1 @ get_vars fml2
 
 let rec get_vars_list fml_list =

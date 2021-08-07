@@ -6,6 +6,7 @@
 %token LPAR RPAR COMMA PERIOD
 %token VDASH
 %token NOT AND OR IF
+%token BOX DIA
 
 %start toplevel 
 %type <(Syntax.formula list * Syntax.formula)> toplevel
@@ -39,6 +40,8 @@ formula_and:
 
 formula_not:
 	| NOT formula_not { FNot $2 }
+	| BOX formula_not { FBox $2 }
+	| DIA formula_not { FDia $2 }
 	| formula_atomic { $1 }
 ;
 
