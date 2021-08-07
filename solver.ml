@@ -120,11 +120,11 @@ let solve (premises, conclusion) =
 			| fml :: rest -> (fml, init_world) :: make_init_list rest
 		in make_init_list (FNot conclusion :: premises)
 	in let vars = get_vars_list (conclusion :: premises) in
-	if is_debug_mode then (print_endline "\n===== search start ====="; level := 0; after_fork := false) else (); (* 変数の初期化 *)
+	if is_debug_mode then (print_endline "\n\x1b[1m===== search start =====\x1b[0m"; level := 0; after_fork := false) else (); (* 変数の初期化 *)
 	let counter_model =
 		match search_tableau init_list [] [] [] with
 			| Some v -> v
 			| None -> []
-	in if is_debug_mode then print_endline "===== search end =====\n" else ();
+	in if is_debug_mode then print_endline "\x1b[1m===== search end =====\x1b[0m\n" else ();
 	counter_model
 	(* fill_false (remove_dup counter_model) vars *)
