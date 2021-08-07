@@ -7,13 +7,39 @@ type formula =
 
 type inference = Inf of formula list * formula (* premises and conclusion *)
 
+(*
+- 結合の強さ: not > and > or > if
+- and, or, if -> 右結合
+- and, orは結合則を満たすので括弧は不要
+*)
 let rec string_of_formula fml =
 	match fml with
 	| FVar p -> p
-	| FNot fml' -> "¬" ^ string_of_formula fml'
-	| FAnd (fml1, fml2) -> "(" ^ string_of_formula fml1 ^ " ⋀ " ^ string_of_formula fml2 ^ ")"
-	| FOr (fml1, fml2) -> "(" ^ string_of_formula fml1 ^ " ⋁ " ^ string_of_formula fml2 ^ ")"
-	| FIf (fml1, fml2) -> "(" ^ string_of_formula fml1 ^ " → " ^ string_of_formula fml2 ^ ")"
+	| FNot fml' ->
+		(match fml' with
+		| FNot _ | FVar _ -> "¬" ^ string_of_formula fml'
+		| _ -> "¬(" ^ string_of_formula fml' ^ ")")
+	| FAnd (fml1, fml2) ->
+		(match fml1 with
+		| FOr (_, _) | FIf (_, _) -> "(" ^ string_of_formula fml1 ^ ")"
+		| _ -> string_of_formula fml1)
+		^ "⋀" ^
+		(match fml2 with
+		| FOr (_, _) | FIf (_, _) -> "(" ^ string_of_formula fml2 ^ ")"
+		| _ -> string_of_formula fml2)
+	| FOr (fml1, fml2) ->
+		(match fml1 with
+		| FIf (_, _) -> "(" ^ string_of_formula fml1 ^ ")"
+		| _ -> string_of_formula fml1)
+		^ " ⋁ " ^
+		(match fml2 with
+		| FIf (_, _) -> "(" ^ string_of_formula fml2 ^ ")"
+		| _ -> string_of_formula fml2)
+	| FIf (fml1, fml2) ->
+		(match fml1 with
+		| FIf (_, _) -> "(" ^ string_of_formula fml1 ^ ")"
+		| _ -> string_of_formula fml1)
+		^ " → " ^ string_of_formula fml2
 
 let string_of_formula_list fmls =
 	let rec string_of_formula_list_inner fmls flag =
