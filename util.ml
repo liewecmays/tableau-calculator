@@ -94,9 +94,10 @@ let rec get_vars_list fml_list =
 
 (* 付値で定まっていない付値に対してfalseを割り当てる *)
 let rec fill_false v vars =
-	match vars with
-	| [] -> v
-	| x :: rest -> if List.mem_assoc x v then fill_false v rest else (x, false) :: fill_false v rest
+	if v = [] then [] else
+		match vars with
+		| [] -> v
+		| x :: rest -> if List.mem_assoc x v then fill_false v rest else (x, false) :: fill_false v rest
 
 
 (* リストの重複する要素を除いて返す *)
