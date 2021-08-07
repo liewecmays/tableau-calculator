@@ -6,17 +6,11 @@ let rec read_solve_print () =
 		print_string "# ";
 		flush stdout;
 		let inf = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
-		let res = solve inf in
-			if List.concat res = [] then print_endline "provable." else
+		let v = solve inf in
+			if v = [] then print_endline "provable." else
 				(print_endline "not provable.";
 				print_string "counter-model: ";
-				let rec print_res res =
-					match res with
-					| [] -> ()
-					| v :: rest -> 
-						if v = [] then print_res rest else
-							print_endline (string_of_valuation v); (* 反例モデルを1つprint *)
-				in print_res res);
+				print_endline (string_of_valuation v));
 		read_solve_print ()
 	with
 	| Failure s -> print_endline s; read_solve_print ()
