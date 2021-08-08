@@ -7,7 +7,6 @@ type formula =
 	| FBox of formula
 	| FDia of formula
 
-type valuation = ((int * string) * bool) list (* 世界と命題変数に対して真偽値を割り当てる *)
-type model = (valuation * (int * int) list) (* 付値と到達可能性関係の組 *)
+type model = (int list * (int * int) list * ((int * string) * bool) list * string list) (* 世界の集合, 到達可能性関係, 付値, 命題変数の集合 *)
 
 type mode = Classical | Modal | Debug

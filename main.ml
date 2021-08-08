@@ -9,16 +9,16 @@ let rec read_solve_print () =
 		let (premises, conclusion) = Parser.toplevel Lexer.token (Lexing.from_channel stdin) in
 		(if is_modal_list (conclusion :: premises) then
 			let counter_model = solve (premises, conclusion) in
-				if counter_model = [] then print_endline "modal logic: \x1b[1mprovable\x1b[0m" else
+				if counter_model = ([], [], [], []) then print_endline "modal logic: \x1b[1mprovable\x1b[0m" else
 					(print_endline "modal logic: \x1b[1m\x1b[31mnot provable\x1b[0m";
-					print_string "counter-model: ";
-					print_endline (string_of_valuation counter_model Modal));
+					print_string "counter-model: \n";
+					print_endline (string_of_model counter_model Modal));
 		else
 			let counter_model = solve (premises, conclusion) in
-				if counter_model = [] then print_endline "classical logic: \x1b[1mprovable\x1b[0m" else
+				if counter_model = ([], [], [], []) then print_endline "classical logic: \x1b[1mprovable\x1b[0m" else
 					(print_endline "classical logic: \x1b[1m\x1b[31mnot provable\x1b[0m";
 					print_string "counter-model: ";
-					print_endline (string_of_valuation counter_model Classical)));
+					print_endline (string_of_model counter_model Classical)));
 		read_solve_print ()
 	with
 	| Failure s -> print_endline s; read_solve_print ()

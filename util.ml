@@ -20,16 +20,8 @@ let rec is_modal_list fml_list =
 	| fml :: rest -> is_modal fml || is_modal_list rest
 
 
-(* 付値で指定されている世界を取り出す *)
-let worlds_of_valuation v =
-	let rec worlds_of_valuation_inner v acc =
-		match v with
-		| [] -> acc
-		| ((w, _), _) :: rest -> if List.mem w acc then worlds_of_valuation_inner rest acc else worlds_of_valuation_inner rest (w :: acc)
-	in worlds_of_valuation_inner v []
-
 (* 付値を世界ごとに分割 *)
-let divide_valuation v =
+let divide_valuation v w =
 	let rec filter_valuation w v =
 		match v with
 		| [] -> []
@@ -38,7 +30,7 @@ let divide_valuation v =
 		match worlds with
 		| [] -> []
 		| w :: rest -> (w, filter_valuation w v) :: divide_valuation_inner v rest
-	in divide_valuation_inner v (List.sort Stdlib.compare (worlds_of_valuation v))
+	in divide_valuation_inner v w
 
 
 (* string_of_系 *)
@@ -47,6 +39,9 @@ let divide_valuation v =
 - and, or, if -> 右結合
 - and, orは結合則を満たすので括弧は不要
 *)
+let rec n_space n =
+	if n = 0 then "" else " " ^ n_space (n-1)
+
 let rec string_of_formula fml =
 	match fml with
 	| FVar p -> p
@@ -89,53 +84,89 @@ let string_of_formula_list fmls =
 		match fmls with
 		| [] -> "]"
 		| fml :: rest ->
-			if flag then
-				string_of_formula fml ^ string_of_formula_list_inner rest false
-			else
-				", " ^ string_of_formula fml ^ string_of_formula_list_inner rest false
+			(if flag then "" else ", ") ^ string_of_formula fml ^ string_of_formula_list_inner rest false
 	in "[" ^ string_of_formula_list_inner fmls true
 
-let string_of_valuation_without_world v =
-	let rec string_of_valuation_without_world_inner v flag =
+let string_of_valuation_debug v =
+	let rec string_of_valuation_debug_inner v flag =
 		match v with
 		| [] -> "}"
 		| (x, b) :: rest ->
-			if flag then
-				x ^ ":" ^ string_of_bool b ^ string_of_valuation_without_world_inner rest false
-			else
-				", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_without_world_inner rest false
-	in "{" ^ string_of_valuation_without_world_inner (List.sort (fun (x, _) (y, _) -> String.compare x y) v) true
+			(if flag then "" else ", ") ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_debug_inner rest false
+	in "{" ^ string_of_valuation_debug_inner (List.sort (fun (x, _) (y, _) -> String.compare x y) v) true
 
-let string_of_valuation v mode =
+let string_of_valuation v vars =
+	let rec string_of_valuation_inner v vars flag =
+		match vars with
+		| [] -> "}"
+		| var :: rest ->
+			(if flag then "" else ", ") ^ var ^ ":" ^
+			(try string_of_bool (List.assoc var v) with Not_found -> "false") (* 指定されていない変数にはfalseを割り当てる *)
+			^ string_of_valuation_inner v rest false
+	in "{" ^ string_of_valuation_inner v vars true
+
+let rec string_of_valuation_in_table v vars =
+	match vars with
+	| [] -> ""
+	| var :: rest ->
+		(let n = String.length var in
+		try 
+			(if List.assoc var v then " \x1b[1mt\x1b[0m"  else " f") ^ n_space n
+		with Not_found -> " f" ^ n_space n) (* 指定されていない変数にはfalseを割り当てる *)
+		^ string_of_valuation_in_table v rest
+
+let string_of_worlds ws =
+	let rec string_of_worlds_inner ws flag =
+		match ws with
+		| [] -> "}"
+		| w :: rest ->
+			(if flag then "" else ", ") ^ "w" ^ string_of_int w ^ string_of_worlds_inner rest false
+	in "{" ^ string_of_worlds_inner ws true
+
+let rec string_of_relation r =
+	let rec string_of_relation_inner ws flag =
+		match ws with
+		| [] -> "}"
+		| (i, j) :: rest ->
+			(if flag then "" else ", ") ^ "w" ^ string_of_int i ^ " → w" ^ string_of_int j ^ string_of_relation_inner rest false
+	in "{" ^ string_of_relation_inner r true
+
+let rec string_of_variables_space vars =
+	match vars with
+	| [] -> ""
+	| var :: rest -> " " ^ var ^ " " ^ string_of_variables_space rest
+
+exception StringifyErr
+let string_of_model (w, r, v, vars) mode =
+	let vs = divide_valuation v w in
 	match mode with
 	| Classical ->
-		let rec string_of_valuation_inner v flag =
-			match v with
-			| [] -> "}"
-			| ((_, x), b) :: rest ->
-				if flag then
-					x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
-				else
-					", " ^ x ^ ":" ^ string_of_bool b ^ string_of_valuation_inner rest false
-		in "{" ^ string_of_valuation_inner (List.sort (fun ((_, x), _) ((_, y), _) -> String.compare x y) v) true
-	| Modal (* to do *)
-	| Debug ->
-		let vs = divide_valuation v in
-		let rec string_of_valuation_each_v vs flag =
+		(match vs with
+		| [(_, v)] -> string_of_valuation v vars
+		| _ -> raise StringifyErr)
+	| Modal ->
+		"- worlds: " ^ string_of_worlds w ^ "\n" ^
+		"- relation: " ^ string_of_relation r ^ "\n" ^
+		"- valuation: \n" ^
+		"  " ^ "\x1b[4m   " ^
+		let n = int_of_float (floor (log10 (float_of_int (List.length w - 1)))) in n_space n
+		^ "|" ^ string_of_variables_space vars ^ " \x1b[0m\n" ^
+		let rec string_of_model_modal vs flag =
 			match vs with
 			| [] -> ""
 			| (w, v) :: rest ->
-				if flag then
-					"w" ^ string_of_int w ^ ":" ^ string_of_valuation_without_world v ^ string_of_valuation_each_v rest false
-				else
-					", w" ^ string_of_int w ^ ":" ^ string_of_valuation_without_world v ^ string_of_valuation_each_v rest false
-		in string_of_valuation_each_v vs true
+				(if flag then "" else "\n") ^ "  w" ^ string_of_int w ^ " |" ^ string_of_valuation_in_table v vars ^ string_of_model_modal rest false
+		in string_of_model_modal vs true
+	| Debug ->
+		let rec string_of_model_debug vs flag =
+			match vs with
+			| [] -> ""
+			| (w, v) :: rest ->
+				(if flag then "" else ", ") ^ "w" ^ string_of_int w ^ ":" ^ string_of_valuation_debug v ^ string_of_model_debug rest false
+		in string_of_model_debug vs true
 
 
 (* タブローをツリー状に表示する際に使う(デバッグ用) *)
-let rec n_space n =
-	if n = 0 then "" else " " ^ n_space (n-1)
-
 let print_string_in_tree s level = print_string (n_space level ^ s)
 
 let print_endline_in_tree s level = print_endline (n_space level ^ s)
