@@ -50,7 +50,7 @@ let rec search_tableau node_list worlds relation boxes branch =
 		let res = find_valuation branch in
 		(match res with
 		| Some v ->
-			if is_debug_mode then print_endline_in_tree ("→ valuation found: " ^ string_of_model (worlds, relation, v, []) Debug) !level else ();
+			if is_debug_mode then print_endline_in_tree ("→ valuation found: " ^ string_of_model (List.rev worlds, relation, v, []) Debug) !level else ();
 			Some (worlds, relation, v)
 		| None ->
 			if is_debug_mode then print_endline_in_tree "→ contradiction" !level else ();
@@ -90,7 +90,7 @@ let rec search_tableau node_list worlds relation boxes branch =
 			world_count := !world_count + 1;
 			let new_world = !world_count in (* 新しい世界を導入 *)
 			let new_relation = (world, new_world) in
-			if is_debug_mode then print_endline (string_of_int world ^ "r" ^ string_of_int new_world) else ();
+			if is_debug_mode then print_endline_in_tree ("[" ^ string_of_int world ^ " → " ^ string_of_int new_world ^ "]") !level else ();
 			let new_nodes = create_nodes_from_world new_relation boxes in (* 新しい到達可能性関係に対応してBoxをもとにノードを増やす *)
 			let res = search_tableau (((fml', new_world) :: new_nodes) @ rest) (new_world :: worlds) (new_relation :: relation) boxes branch in
 				world_count := !world_count - 1;

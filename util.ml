@@ -145,17 +145,17 @@ let string_of_model (w, r, v, vars) mode =
 		| [(_, v)] -> string_of_valuation v vars
 		| _ -> raise StringifyErr)
 	| Modal ->
+		let d = int_of_float (floor (log10 (float_of_int (List.length w - 1)))) in (* 世界の番号の最大値の桁数 - 1 *)
 		"- worlds: " ^ string_of_worlds w ^ "\n" ^
 		"- relation: " ^ string_of_relation r ^ "\n" ^
 		"- valuation: \n" ^
-		"  " ^ "\x1b[4m   " ^
-		let n = int_of_float (floor (log10 (float_of_int (List.length w - 1)))) in n_space n
-		^ "|" ^ string_of_variables_space vars ^ " \x1b[0m\n" ^
+		"  " ^ "\x1b[4m" ^ n_space (3 + d) ^ "|" ^ string_of_variables_space vars ^ " \x1b[0m\n" ^
 		let rec string_of_model_modal vs flag =
 			match vs with
 			| [] -> ""
 			| (w, v) :: rest ->
-				(if flag then "" else "\n") ^ "  w" ^ string_of_int w ^ " |" ^ string_of_valuation_in_table v vars ^ string_of_model_modal rest false
+				let d' = int_of_float (floor (log10 (float_of_int w))) in (* 現在のwの桁数 - 1 *)
+				(if flag then "" else "\n") ^ "  w" ^ string_of_int w ^ n_space (d - d') ^ " |" ^ string_of_valuation_in_table v vars ^ string_of_model_modal rest false
 		in string_of_model_modal vs true
 	| Debug ->
 		let rec string_of_model_debug vs flag =
